@@ -1,21 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title></title>
-		<link href="css/style.css" rel="stylesheet">
-		<script href="js/app.js"></script>
-		<title>Procesador de Imagenes</title>
-	</head>
-	<body>
-		<h1>Subir Imagen</h1>
-		<input type="file" id="inputImagen">
-		<button id="procesarBtn">
-			Procesar Imagen
-		</button>		
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesador Multimedia</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Procesador Multimedia</h1>
+    </header>
 
-		<p id="Status"></p>
+    <main>
+        <div class="tabs">
+            <button class="tab active" data-tab="imagen">Imagen</button>
+            <button class="tab" data-tab="video">Video</button>
+        </div>
 
-	</body>
+			<div class="tab-content" id="imagen">
+				<div class="form-group">
+					<label>Imagen</label>
+					<input type="file" id="img-archivo" accept="image/*" />
+				</div>
+
+				<div class="preview" id="img-preview" style="display:none">
+					<img id="img-preview-src" src="" alt="Preview" />
+				</div>
+
+				<div class="form-group">
+					<label>Operación</label>
+					<select id="img-operacion">
+						<option value="">-- Selecciona --</option>
+						<option value="convertir">Convertir formato</option>
+						<option value="resize">Redimensionar</option>
+						<option value="filtro">Aplicar filtro</option>
+					</select>
+				</div>
+
+				<div id="opts-convertir" class="hidden">
+					<div class="form-group">
+						<label>Formato destino</label>
+						<select id="img-formato">
+							<option value="png">PNG</option>
+							<option value="jpg">JPG</option>
+							<option value="jpeg">JPEG</option>
+							<option value="webp">WebP</option>
+						</select>
+					</div>
+				</div>
+
+				<div id="opts-resize" class="hidden">
+					<div class="form-row">
+						<div class="form-group">
+							<label>Ancho (px)</label>
+							<input type="number" id="img-ancho" placeholder="800" />
+						</div>
+						<div class="form-group">
+							<label>Alto (px)</label>
+							<input type="number" id="img-alto" placeholder="600" />
+						</div>
+					</div>
+				</div>
+
+				<div id="opts-filtro" class="hidden">
+					<div class="form-group">
+						<label>Filtro</label>
+						<select id="img-filtro">
+							<option value="grayscale">Escala de grises</option>
+							<option value="blur">Desenfoque</option>
+							<option value="sharpen">Afilar</option>
+							<option value="sepia">Sepia</option>
+						</select>
+					</div>
+				</div>
+
+				<button class="btn" id="btn-imagen">Procesar imagen</button>
+			</div>
+
+			<div class="tab-content hidden" id="video">
+				<div class="form-group">
+					<label>URL de YouTube</label>
+					<input type="url" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." />
+				</div>
+
+				<div class="preview" id="yt-preview" style="display:none">
+					<img id="yt-preview-src" src="" alt="Miniatura" />
+				</div>
+
+				<div class="form-group">
+					<label>Formato</label>
+					<select id="yt-formato">
+						<option value="mp4">MP4 (video)</option>
+						<option value="mp3">MP3 (solo audio)</option>
+					</select>
+				</div>
+
+				<button class="btn" id="btn-youtube">Descargar</button>
+			</div>
+
+        <section id="tareas">
+            <!-- tarjetas de tareas aquí -->
+        </section>
+    </main>
+
+    <script src="static/js/app.js"></script>
+</body>
 </html>
