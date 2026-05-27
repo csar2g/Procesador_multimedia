@@ -58,3 +58,118 @@ document.getElementById('yt-url').addEventListener('input', function() {
         document.getElementById('yt-preview').style.display = 'none';
     }
 });
+
+// ── Enviar imagen ──────────────────────────────────────────────
+document.getElementById('btn-imagen').addEventListener('click', async function() {
+    const archivo = document.getElementById('img-archivo').files[0];
+    const operacion = document.getElementById('img-operacion').value;
+
+    if (!archivo) return alert('Selecciona una imagen');
+    if (!operacion) return alert('Selecciona una operación');
+
+    const fd = new FormData();
+    fd.append('file', archivo);
+    fd.append('operacion', operacion);
+
+    if (operacion === 'convertir') {
+        fd.append('formato', document.getElementById('img-formato').value);
+    } else if (operacion === 'resize') {
+        fd.append('ancho', document.getElementById('img-ancho').value);
+        fd.append('alto', document.getElementById('img-alto').value);
+    } else if (operacion === 'filtro') {
+        fd.append('filtro', document.getElementById('img-filtro').value);
+    }
+
+    const res = await fetch('/imagen/procesar', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    agregarTarea(data.task_id, 'imagen');
+});
+
+// ── Enviar YouTube ─────────────────────────────────────────────
+document.getElementById('btn-youtube').addEventListener('click', async function() {
+    const url = document.getElementById('yt-url').value.trim();
+    const formato = document.getElementById('yt-formato').value;
+
+    if (!url) return alert('Ingresa una URL');
+
+    const fd = new FormData();
+    fd.append('url', url);
+    fd.append('formato', formato);
+
+    const res = await fetch('/youtube/descargar', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    agregarTarea(data.task_id, 'youtube');
+});
+
+// ── Tarjetas de tareas ─────────────────────────────────────────
+function agregarTarea(taskId, tipo) {
+    const seccion = document.getElementById('tareas');
+
+    const card = document.createElement('div');
+    card.className = 'tarea-card';
+    card.id = `tarea-${taskId}`;
+    card.innerHTML = `
+        <div class="tarea-preview" id="preview-${taskId}"></div>
+        <div class="tarea-info">
+            <div class="tarea-id">ID: ${taskId.slice(0, 8)}...</div>
+            <div class="tarea-tipo">${tipo === 'imagen' ? '🖼 Imagen' : '▶ YouTube'}</div>
+            <div class="tarea-status status-pendiente" id="status-${taskId}">Pendiente</div>
+        </div>
+        <div id="accion-${taskId}"></div>
+    `;
+
+    seccion.prepend(card);
+
+    // Abrir SSE
+    const ruta = tipo === 'imagen' ? 'imagen' : 'youtube';
+    const es = new EventSource(`/${ruta}/stream/${taskId}`);
+
+    es.onmessage = function(e) {
+        const tarea = JSON.parse(e.data);
+        actualizarTarea(taskId, tarea, tipo);
+
+        if (['completada', 'error'].includes(tarea.status)) {
+            es.close();
+        }
+    };
+}
+
+function actualizarTarea(taskId, tarea, tipo) {
+    const statusEl = document.getElementById(`status-${taskId}`);
+    const accionEl = document.getElementById(`accion-${taskId}`);
+    const previewEl = document.getElementById(`preview-${taskId}`);
+
+    const labels = {
+        pendiente: 'Pendiente',
+        en_proceso: 'En proceso...',
+        completada: 'Completada',
+        error: 'Error',
+    };
+
+    statusEl.textContent = labels[tarea.status] || tarea.status;
+    statusEl.className = `tarea-status status-${tarea.status}`;
+
+    if (tarea.status === 'completada') {
+        const ruta = tipo === 'imagen' ? 'imagen' : 'youtube';
+
+        // Botón de descarga
+        accionEl.innerHTML = `
+            <a class="btn-descargar" href="/${ruta}/descargar/${taskId}" download>
+                Descargar
+            </a>
+        `;
+
+        // Preview del resultado si es imagen
+        if (tipo === 'imagen') {
+            previewEl.innerHTML = `
+                <img src="/${ruta}/descargar/${taskId}" alt="Resultado" />
+            `;
+        }
+    }
+
+    if (tarea.status === 'error') {
+        accionEl.innerHTML = `<span style="color: var(--error); font-size: 0.8rem;">${tarea.error || 'Error desconocido'}</span>`;
+    }
+}

@@ -2,8 +2,11 @@ from PIL import Image
 import json
 import redis
 import os
+import sys
 
-r = redis.from_url("redis://localhost:6379/0", decode_responses=True)
+sys.stdout.flush()
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+r = redis.from_url(REDIS_URL, decode_responses=True)
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -90,7 +93,7 @@ def procesar_youtube(tarea: dict):
     return os.path.join(OUTPUT_DIR, f"{tarea['id']}.{ext}")
 
 def main():
-    print("Worker iniciado, esperando tareas...")
+    print("Worker iniciado, esperando tareas...", flush=True)
     while True:
         _, raw = r.brpop("cola:tareas")
         tarea = json.loads(raw)
