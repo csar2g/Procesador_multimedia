@@ -5,6 +5,7 @@ import os
 import uuid
 from fastapi.responses import StreamingResponse, FileResponse
 from app.services.redis_client import encolar_tarea, obtener_tarea, stream_tarea
+from app.services.s3_client import subir_archivo, s3, BUCKET
 
 router = APIRouter()
 
@@ -14,11 +15,11 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @router.post("/imagen/procesar")
 async def procesar_imagen(
     file: UploadFile = File(...),
-    operacion: str = Form(...),   # "convertir", "resize", "filtro"
+    operacion: str = Form(...),
     formato: str = Form(None),
     ancho: int = Form(None),
     alto: int = Form(None),
-    filtro: str = Form(None),     # "grayscale", "blur", "sharpen", "sepia"
+    filtro: str = Form(None),
 ):
     ext = os.path.splitext(file.filename)[1]
     nombre = f"{uuid.uuid4()}{ext}"
@@ -28,9 +29,13 @@ async def procesar_imagen(
         contenido = await file.read()
         f.write(contenido)
 
+    # Subir a S3
+    subir_archivo(ruta, f"uploads/{nombre}")
+
     task_id = encolar_tarea("imagen", {
         "archivo": file.filename,
         "ruta": ruta,
+        "s3_key": f"uploads/{nombre}",
         "operacion": operacion,
         "formato": formato,
         "ancho": ancho,
@@ -57,6 +62,14 @@ async def descargar_imagen(task_id: str):
         return {"error": "Tarea no encontrada"}
     if tarea["status"] != "completada":
         return {"error": "La tarea aún no está completada"}
-    
+
     ruta = tarea["resultado"]
-    return FileResponse(ruta, filename=os.path.basename(ruta))
+    nombre_s3 = f"outputs/{os.path.basename(ruta)}"
+    
+    url = s3.generate_presigned_url(
+        'get_object',
+        Params={'Bucket': BUCKET, 'Key': nombre_s3},
+        ExpiresIn=3600  # URL válida por 1 hora
+    )
+    
+    return {"url": url}

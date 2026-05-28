@@ -11,7 +11,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+COPY cookies.txt /app/cookies.txt
 
 RUN mkdir -p /app/uploads /app/outputs
-
+ENV PYTHONPATH=/app
 CMD ["python", "app/workers/worker.py"]

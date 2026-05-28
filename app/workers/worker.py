@@ -1,4 +1,5 @@
 from PIL import Image
+from app.services.s3_client import subir_archivo, descargar_archivo
 import json
 import redis
 import os
@@ -14,6 +15,10 @@ def procesar_tarea(tarea: dict):
     payload = tarea["payload"]
     ruta_entrada = payload["ruta"]
     operacion = payload["operacion"]
+
+    # Si no existe local, descarga de S3
+    if not os.path.exists(ruta_entrada):
+        descargar_archivo(payload["s3_key"], ruta_entrada)
 
     img = Image.open(ruta_entrada)
 
@@ -58,7 +63,10 @@ def procesar_tarea(tarea: dict):
         ruta_salida = os.path.join(OUTPUT_DIR, nombre_salida)
         img.save(ruta_salida)
 
-    print(f"Imagen guardada en {ruta_salida}")
+    nombre_s3 = f"outputs/{os.path.basename(ruta_salida)}"
+    subir_archivo(ruta_salida, nombre_s3)
+
+    print(f"Imagen guardada en S3: {nombre_s3}", flush=True)
     return ruta_salida
 
 def procesar_youtube(tarea: dict):
@@ -72,9 +80,10 @@ def procesar_youtube(tarea: dict):
 
     ydl_opts = {
         "outtmpl": output_template,
-        "quiet": True,
-        "extractor_args": {"youtube": {"js_runtimes": ["node:/home/Cesar/.nvm/versions/node/v24.11.1/bin/node"]}},
-        "remote_components": "ejs:github",
+        "quiet": False,
+        "cookiefile": "/app/cookies.txt",
+        "extractor_args": {"youtube": {"js_runtimes": ["node:/usr/bin/node"]}},
+        "compat_opts": {"no-youtube-channel-redirect"},
     }
 
     if formato == "mp3":
@@ -84,7 +93,7 @@ def procesar_youtube(tarea: dict):
             "preferredcodec": "mp3",
         }]
     else:
-        ydl_opts["format"] = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]"
+        ydl_opts["format"] = "best"
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])

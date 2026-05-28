@@ -59,7 +59,7 @@ document.getElementById('yt-url').addEventListener('input', function() {
     }
 });
 
-// ── Enviar imagen ──────────────────────────────────────────────
+// ── Enviar imagen 
 document.getElementById('btn-imagen').addEventListener('click', async function() {
     const archivo = document.getElementById('img-archivo').files[0];
     const operacion = document.getElementById('img-operacion').value;
@@ -86,8 +86,8 @@ document.getElementById('btn-imagen').addEventListener('click', async function()
     agregarTarea(data.task_id, 'imagen');
 });
 
-// ── Enviar YouTube ─────────────────────────────────────────────
-document.getElementById('btn-youtube').addEventListener('click', async function() {
+// ── Enviar YouTube 
+	document.getElementById('btn-youtube').addEventListener('click', async function() {
     const url = document.getElementById('yt-url').value.trim();
     const formato = document.getElementById('yt-formato').value;
 
@@ -103,7 +103,7 @@ document.getElementById('btn-youtube').addEventListener('click', async function(
     agregarTarea(data.task_id, 'youtube');
 });
 
-// ── Tarjetas de tareas ─────────────────────────────────────────
+// ── Tarjetas de tareas 
 function agregarTarea(taskId, tipo) {
     const seccion = document.getElementById('tareas');
 
@@ -136,7 +136,7 @@ function agregarTarea(taskId, tipo) {
     };
 }
 
-function actualizarTarea(taskId, tarea, tipo) {
+async function actualizarTarea(taskId, tarea, tipo) {
     const statusEl = document.getElementById(`status-${taskId}`);
     const accionEl = document.getElementById(`accion-${taskId}`);
     const previewEl = document.getElementById(`preview-${taskId}`);
@@ -154,12 +154,14 @@ function actualizarTarea(taskId, tarea, tipo) {
     if (tarea.status === 'completada') {
         const ruta = tipo === 'imagen' ? 'imagen' : 'youtube';
 
-        // Botón de descarga
-        accionEl.innerHTML = `
-            <a class="btn-descargar" href="/${ruta}/descargar/${taskId}" download>
-                Descargar
-            </a>
-        `;
+        const res = await fetch(`/${ruta}/descargar/${taskId}`);
+		const data = await res.json();
+		
+		accionEl.innerHTML = `
+			<a class="btn-descargar" href="${data.url}" target="_blank" download>
+				Descargar
+			</a>
+		`;
 
         // Preview del resultado si es imagen
         if (tipo === 'imagen') {

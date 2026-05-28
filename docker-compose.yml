@@ -1,4 +1,3 @@
-
 services:
   redis:
     image: redis:7-alpine
@@ -13,53 +12,29 @@ services:
       - "8000:8000"
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - AWS_BUCKET_NAME=csar2g-objects
+      - AWS_REGION=us-east-1
     depends_on:
       - redis
     volumes:
       - uploads:/app/uploads
       - outputs:/app/outputs
 
-  worker_1:
+  worker:
     build:
       context: .
       dockerfile: app/workers/Dockerfile
-    container_name: worker_1
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - WORKER_ID=worker_1
+      - AWS_BUCKET_NAME=csar2g-objects
+      - AWS_REGION=us-east-1
     depends_on:
       - redis
     volumes:
       - uploads:/app/uploads
       - outputs:/app/outputs
-
-  worker_2:
-    build:
-      context: .
-      dockerfile: app/workers/Dockerfile
-    container_name: worker_2
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-      - WORKER_ID=worker_2
-    depends_on:
-      - redis
-    volumes:
-      - uploads:/app/uploads
-      - outputs:/app/outputs
-
-  worker_3:
-    build:
-      context: .
-      dockerfile: app/workers/Dockerfile
-    container_name: worker_3
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-      - WORKER_ID=worker_3
-    depends_on:
-      - redis
-    volumes:
-      - uploads:/app/uploads
-      - outputs:/app/outputs
+    deploy:
+      replicas: 3
 
 volumes:
   uploads:
