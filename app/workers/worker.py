@@ -63,8 +63,11 @@ def procesar_tarea(tarea: dict):
         ruta_salida = os.path.join(OUTPUT_DIR, nombre_salida)
         img.save(ruta_salida)
 
-    nombre_s3 = f"outputs/{os.path.basename(ruta_salida)}"
-    subir_archivo(ruta_salida, nombre_s3)
+    try:
+        nombre_s3 = f"outputs/{os.path.basename(ruta_salida)}"
+        subir_archivo(ruta_salida, nombre_s3)
+    except Exception as e:
+        print(f"S3 no disponible, guardando solo local: {e}", flush=True)
 
     print(f"Imagen guardada en S3: {nombre_s3}", flush=True)
     return ruta_salida
@@ -81,7 +84,6 @@ def procesar_youtube(tarea: dict):
     ydl_opts = {
         "outtmpl": output_template,
         "quiet": False,
-        "cookiefile": "/app/cookies.txt",
         "extractor_args": {"youtube": {"js_runtimes": ["node:/usr/bin/node"]}},
         "compat_opts": {"no-youtube-channel-redirect"},
     }

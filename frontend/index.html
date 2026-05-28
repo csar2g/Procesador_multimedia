@@ -18,9 +18,12 @@
         </div>
 
 			<div class="tab-content" id="imagen">
-				<div class="form-group">
-					<label>Imagen</label>
-					<input type="file" id="img-archivo" accept="image/*" />
+				<div class="dropzone" id="dropzone">
+					<p>Arrastra tu imagen aquí</p>
+					<p>o</p>
+					<button type="button" class="btn-secondary" onclick="document.getElementById('img-archivo').click()">Seleccionar archivo</button>
+					<input type="file" id="img-archivo" accept="image/*" style="display:none" />
+					<p id="nombre-archivo"></p>
 				</div>
 
 				<div class="preview" id="img-preview" style="display:none">

@@ -211,3 +211,77 @@ main {
 .btn-descargar:hover {
     opacity: 0.85;
 }
+
+.dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 1rem;
+}
+
+.dropzone.drag-over {
+    border-color: var(--accent-hover);
+    background: rgba(57, 73, 171, 0.1);
+}
+
+.btn-secondary {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    margin: 0.5rem 0;
+    transition: border-color 0.2s;
+}
+
+.btn-secondary:hover {
+    border-color: var(--accent-hover);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.tarea-card {
+    animation: fadeInUp 0.3s ease;
+}
+
+.status-en_proceso {
+    animation: pulse 1.5s infinite;
+}
+
+.dropzone {
+    transition: border-color 0.3s, background 0.3s, transform 0.2s;
+}
+
+.dropzone:hover {
+    transform: scale(1.01);
+}
+
+.btn {
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-descargar {
+    animation: fadeInUp 0.3s ease;
+}

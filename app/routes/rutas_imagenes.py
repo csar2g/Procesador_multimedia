@@ -29,10 +29,14 @@ async def procesar_imagen(
         contenido = await file.read()
         f.write(contenido)
 
-    # Subir a S3
-    subir_archivo(ruta, f"uploads/{nombre}")
+    # Subir a S3 si está disponible
+    try:
+        subir_archivo(ruta, f"uploads/{nombre}")
+    except Exception as e:
+        print(f"S3 no disponible, guardando solo local: {e}", flush=True)
 
     task_id = encolar_tarea("imagen", {
+
         "archivo": file.filename,
         "ruta": ruta,
         "s3_key": f"uploads/{nombre}",
@@ -65,11 +69,14 @@ async def descargar_imagen(task_id: str):
 
     ruta = tarea["resultado"]
     nombre_s3 = f"outputs/{os.path.basename(ruta)}"
-    
-    url = s3.generate_presigned_url(
-        'get_object',
-        Params={'Bucket': BUCKET, 'Key': nombre_s3},
-        ExpiresIn=3600  # URL válida por 1 hora
-    )
-    
-    return {"url": url}
+
+    try:
+        url = s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': BUCKET, 'Key': nombre_s3},
+            ExpiresIn=3600
+        )
+        return {"url": url}
+    except Exception:
+        # Sin S3, servir archivo local
+        return FileResponse(ruta, filename=os.path.basename(ruta))

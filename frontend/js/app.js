@@ -105,6 +105,8 @@ document.getElementById('btn-imagen').addEventListener('click', async function()
 
 // ── Tarjetas de tareas 
 function agregarTarea(taskId, tipo) {
+
+	guardarTarea(taskId, tipo);
     const seccion = document.getElementById('tareas');
 
     const card = document.createElement('div');
@@ -151,27 +153,85 @@ async function actualizarTarea(taskId, tarea, tipo) {
     statusEl.textContent = labels[tarea.status] || tarea.status;
     statusEl.className = `tarea-status status-${tarea.status}`;
 
-    if (tarea.status === 'completada') {
-        const ruta = tipo === 'imagen' ? 'imagen' : 'youtube';
+	if (tarea.status === 'completada') {
+		const ruta = tipo === 'imagen' ? 'imagen' : 'youtube';
+		const res = await fetch(`/${ruta}/descargar/${taskId}`);
+		const contentType = res.headers.get('content-type');
 
-        const res = await fetch(`/${ruta}/descargar/${taskId}`);
-		const data = await res.json();
-		
-		accionEl.innerHTML = `
-			<a class="btn-descargar" href="${data.url}" target="_blank" download>
-				Descargar
-			</a>
-		`;
+		if (contentType && contentType.includes('application/json')) {
+			const data = await res.json();
+			accionEl.innerHTML = `<a class="btn-descargar" href="${data.url}" target="_blank" download>Descargar</a>`;
+		} else {
+			accionEl.innerHTML = `<a class="btn-descargar" href="/${ruta}/descargar/${taskId}" download>Descargar</a>`;
+		}
 
-        // Preview del resultado si es imagen
-        if (tipo === 'imagen') {
-            previewEl.innerHTML = `
-                <img src="/${ruta}/descargar/${taskId}" alt="Resultado" />
-            `;
-        }
-    }
-
-    if (tarea.status === 'error') {
-        accionEl.innerHTML = `<span style="color: var(--error); font-size: 0.8rem;">${tarea.error || 'Error desconocido'}</span>`;
-    }
+		if (tipo === 'imagen') {
+			previewEl.innerHTML = `<img src="/${ruta}/descargar/${taskId}" alt="Resultado" />`;
+		}
+	}
 }
+
+// ── Drag & Drop ────────────────────────────────────────────────
+const dropzone = document.getElementById('dropzone');
+const inputArchivo = document.getElementById('img-archivo');
+
+dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('drag-over');
+});
+
+dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('drag-over');
+});
+
+dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    
+    const archivo = e.dataTransfer.files[0];
+    if (!archivo) return;
+    if (!archivo.type.startsWith('image/')) {
+        alert('Solo se aceptan imágenes');
+        return;
+    }
+    
+    cargarArchivo(archivo);
+});
+
+inputArchivo.addEventListener('change', function() {
+    if (this.files[0]) cargarArchivo(this.files[0]);
+});
+
+function cargarArchivo(archivo) {
+    // Mostrar nombre
+    document.getElementById('nombre-archivo').textContent = archivo.name;
+    
+    // Preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('img-preview-src').src = e.target.result;
+        document.getElementById('img-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(archivo);
+    
+    // Guardar en el input para enviarlo después
+    const dt = new DataTransfer();
+    dt.items.add(archivo);
+    inputArchivo.files = dt.files;
+}
+
+function guardarTarea(taskId, tipo, nombre) {
+    const historial = JSON.parse(localStorage.getItem('historial') || '[]');
+    historial.unshift({ taskId, tipo, nombre, fecha: new Date().toLocaleString() });
+    localStorage.setItem('historial', JSON.stringify(historial));
+}
+
+function cargarHistorial() {
+    const historial = JSON.parse(localStorage.getItem('historial') || '[]');
+    historial.forEach(t => {
+        agregarTarea(t.taskId, t.tipo);
+    });
+}
+
+// Cargar historial al iniciar
+cargarHistorial();
