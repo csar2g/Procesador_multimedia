@@ -3,9 +3,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from app.routes.rutas_imagenes import router
 from app.routes.rutas_video import router as router_youtube
+from app.routes.rutas_s3 import router as router_s3
 
 app = FastAPI()
 
+app.include_router(router_s3)
 app.include_router(router_youtube)
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 app.include_router(router)

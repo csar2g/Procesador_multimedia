@@ -16,6 +16,8 @@ def procesar_tarea(tarea: dict):
     ruta_entrada = payload["ruta"]
     operacion = payload["operacion"]
 
+    print(f"Tarea {tarea['id'][:8]} — operación: {operacion}", flush=True)
+
     # Si no existe local, descarga de S3
     if not os.path.exists(ruta_entrada):
         descargar_archivo(payload["s3_key"], ruta_entrada)
@@ -23,6 +25,7 @@ def procesar_tarea(tarea: dict):
     img = Image.open(ruta_entrada)
 
     if operacion == "convertir":
+        print(f"Convirtiendo a {payload['formato']}", flush=True)
         formato = payload["formato"].lower()
         nombre_salida = f"{tarea['id']}.{formato}"
         ruta_salida = os.path.join(OUTPUT_DIR, nombre_salida)
@@ -32,6 +35,7 @@ def procesar_tarea(tarea: dict):
         img.save(ruta_salida, format=formato_pillow)
 
     elif operacion == "resize":
+        print(f"Redimensionando a {payload['ancho']}x{payload['alto']}", flush=True)
         ancho = payload["ancho"]
         alto = payload["alto"]
         img = img.resize((ancho, alto))
@@ -40,6 +44,7 @@ def procesar_tarea(tarea: dict):
         img.save(ruta_salida)
 
     elif operacion == "filtro":
+        print(f"Aplicando filtro: {payload['filtro']}", flush=True)
         from PIL import ImageFilter
         filtro = payload["filtro"]
         if filtro == "grayscale":
@@ -79,6 +84,7 @@ def procesar_youtube(tarea: dict):
     url = payload["url"]
     formato = payload["formato"]
 
+    print(f"Descargando YouTube: {url} en formato {formato}", flush=True)
     output_template = os.path.join(OUTPUT_DIR, f"{tarea['id']}.%(ext)s")
 
     ydl_opts = {
@@ -101,7 +107,9 @@ def procesar_youtube(tarea: dict):
         ydl.download([url])
 
     ext = "mp3" if formato == "mp3" else "mp4"
-    return os.path.join(OUTPUT_DIR, f"{tarea['id']}.{ext}")
+    ruta_salida = os.path.join(OUTPUT_DIR, f"{tarea['id']}.{ext}")
+    print(f"Descarga completada: {ruta_salida}", flush=True)
+    return ruta_salida
 
 def main():
     print("Worker iniciado, esperando tareas...", flush=True)
